@@ -1,11 +1,11 @@
 package com.acme.assistant.model;
 
-import java.util.List;
+import java.util.LinkedList;
 
 public record ChatResponse(
         String id,
         String model,
-        List<Choice> choices,
+        LinkedList<Choice> choices,
         Usage usage
 ) {
     public String content() {

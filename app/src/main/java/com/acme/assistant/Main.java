@@ -6,12 +6,7 @@ import com.acme.assistant.model.ChatResponse;
 import com.acme.assistant.model.Message;
 import com.fasterxml.jackson.databind.*;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.List;
-import java.util.Map;
 
 public class Main {
 
