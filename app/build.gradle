@@ -36,6 +36,10 @@ application {
     mainClass = 'com.acme.assistant.Main'
 }
 
+run {
+    standardInput = System.in
+}
+
 test {
     useJUnitPlatform()
 }

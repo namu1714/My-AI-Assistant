@@ -1,36 +1,25 @@
 package com.acme.assistant;
 
 import com.acme.assistant.client.OpenAiClient;
-import com.acme.assistant.model.ChatRequest;
-import com.acme.assistant.model.ChatResponse;
-import com.acme.assistant.model.Message;
+import com.acme.assistant.ui.ConsoleChatBot;
 import com.fasterxml.jackson.databind.*;
 
-import java.util.List;
 
 public class Main {
 
     public static void main(String[] args) throws Exception {
         String apiKey = System.getenv("OPENAI_API_KEY");
         if (apiKey == null || apiKey.isBlank()) {
-            throw new IllegalStateException(
-                    "OPENAI_API_KEY 환경 변수를 설정해야 합니다"
-            );
+            System.err.println("OPENAI_API_KEY 환경 변수를 설정해야 합니다.");
+            return;
         }
 
         OpenAiClient client = new OpenAiClient(apiKey);
-
-        ChatRequest chatRequest = new ChatRequest(
-                "gpt-4o-mini",
-                List.of(
-                        Message.ofSystem("당신은 친절한 AI 비서입니다."),
-                        Message.ofUser("자기소개를 한 문장으로 해주세요.")
-                )
+        ConsoleChatBot chatBot = new ConsoleChatBot(
+                client,
+                "당신은 친절한 AI 비서입니다. 간결하게 답변하세요."
         );
-
-        ChatResponse chatResponse = client.chat(chatRequest);
-
-        System.out.println("AI: " + chatResponse.content());
-        System.out.println("Token Usage: " + chatResponse.usage().totalTokens());
+        chatBot.setStreamingEnabled(true);
+        chatBot.start();
     }
 }

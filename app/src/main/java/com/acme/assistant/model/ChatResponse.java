@@ -1,17 +1,17 @@
 package com.acme.assistant.model;
 
-import java.util.LinkedList;
+import java.util.List;
 
 public record ChatResponse(
         String id,
         String model,
-        LinkedList<Choice> choices,
+        List<Choice> choices,
         Usage usage
 ) {
     public String content() {
         if (choices == null || choices.isEmpty()) {
             return "";
         }
-        return choices.get(0).message().content();
+        return choices.getFirst().message().content();
     }
 }

@@ -3,18 +3,22 @@ package com.acme.assistant.client;
 import com.acme.assistant.exception.OpenAiException;
 import com.acme.assistant.model.ChatRequest;
 import com.acme.assistant.model.ChatResponse;
+import com.acme.assistant.model.ChatStreamResponse;
 import com.acme.assistant.model.ErrorResponse;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.StringReader;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Consumer;
 
 public class OpenAiClient {
 
@@ -52,6 +56,48 @@ public class OpenAiClient {
                 .build();
 
         return sendWithRetry(request);
+    }
+
+    public void chatStream(ChatRequest chatRequest, Consumer<String> onToken)
+            throws IOException, InterruptedException {
+
+        String json = objectMapper.writeValueAsString(chatRequest);
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(BASE_URL + "/v1/chat/completions"))
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer " + apiKey)
+                .POST(HttpRequest.BodyPublishers.ofString(json))
+                .build();
+
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() != 200) {
+            throw createException(response.statusCode(), response.body());
+        }
+
+        try (BufferedReader reader = new BufferedReader(new StringReader(response.body()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (!line.startsWith("data: ")) {
+                    continue;
+                }
+                String data = line.substring(6).trim(); // "data: " 제거
+                if ("[DONE]".equals(data)) {
+                    break;
+                }
+
+                ChatStreamResponse streamResponse = objectMapper.readValue(data, ChatStreamResponse.class);
+
+                if (streamResponse.choices() != null && !streamResponse.choices().isEmpty()) {
+                    ChatStreamResponse.Delta delta = streamResponse.choices().getFirst().delta();
+
+                    if (delta != null && delta.content() != null && !delta.content().isEmpty()) {
+                        onToken.accept(delta.content());
+                    }
+                }
+            }
+        }
     }
 
     private ChatResponse sendWithRetry(HttpRequest request) throws IOException, InterruptedException {

@@ -6,9 +6,10 @@ public record ChatRequest(
         String model,
         List<Message> messages,
         Double temperature,
-        Integer maxTokens
+        Integer maxTokens,
+        Boolean stream
 ) {
     public ChatRequest(String model, List<Message> messages) {
-        this(model, messages, null, null);
+        this(model, messages, null, null, null);
     }
 }

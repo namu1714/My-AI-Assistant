@@ -45,7 +45,8 @@ public class ChatRequestTest {
                 "gpt-4o-mini",
                 List.of(Message.ofUser("안녕하세요")),
                 0.7,
-                100
+                100,
+                null
         );
 
         String json = mapper.writeValueAsString(request);

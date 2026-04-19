@@ -19,6 +19,7 @@ import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -82,6 +83,31 @@ public class OpenAiClientTest {
         assertThatThrownBy(() -> client.chat(request))
                 .isInstanceOf(OpenAiException.class)
                 .hasMessageContaining("rate_limit_exceeded");
+    }
+
+    @Test
+    void 스트리밍_응답을_토큰_단위로_전달한다() throws Exception {
+        String sseResponse = """
+                data: {"id":"chatcmpl-test","model":"gpt-4o-mini","choices":[{"index":0,"delta":{"role":"assistant","content":""}}]}
+                data: {"id":"chatcmpl-test","model":"gpt-4o-mini","choices":[{"index":0,"delta":{"content":" 안녕"}}]}
+                data: {"id":"chatcmpl-test","model":"gpt-4o-mini","choices":[{"index":0,"delta":{"content":" 하세요"}}]}
+                data: {"id":"chatcmpl-test","model":"gpt-4o-mini","choices":[{"index":0,"delta":{"content":"!"},"finish_reason": "stop"}]}
+                data: [DONE]
+                """;
+
+        HttpClient stubClient = createStupHttpClient(200, sseResponse);
+        OpenAiClient client = new OpenAiClient("test-key", stubClient);
+
+        ChatRequest request = new ChatRequest(
+                "gpt-4o-mini",
+                List.of(Message.ofUser("테스트")),
+                null, null, true
+        );
+
+        List<String> tokens = new ArrayList<>();
+        client.chatStream(request, tokens::add);
+
+        assertThat(tokens).containsExactly(" 안녕", " 하세요", "!");
     }
 
     private HttpClient createStupHttpClient(int statusCode, String body) {
