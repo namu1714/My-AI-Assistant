@@ -46,6 +46,7 @@ public class ChatRequestTest {
                 List.of(Message.ofUser("안녕하세요")),
                 0.7,
                 100,
+                null,
                 null
         );
 
@@ -53,5 +54,24 @@ public class ChatRequestTest {
 
         assertThat(json).contains("\"temperature\":0.7");
         assertThat(json).contains("\"max_tokens\":100");
+    }
+
+    @Test
+    void JSON_모드_응답_형식을_직렬화한다() throws Exception {
+        ChatRequest request = new ChatRequest(
+                "gpt-4o-mini",
+                List.of(Message.ofUser(" 다음 정보를 JSON 으로 추출해줘.")),
+                null,
+                null,
+                null,
+                ResponseFormat.jsonObject()
+        );
+
+        String json = mapper.writeValueAsString(request);
+
+        assertThat(json).contains("\"response_format\"");
+        assertThat(json).contains("\"type\":\"json_object\"");
+        assertThat(json).doesNotContain("temperature");
+        assertThat(json).doesNotContain("stream");
     }
 }
