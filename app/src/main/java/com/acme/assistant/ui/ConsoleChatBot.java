@@ -4,7 +4,12 @@ import com.acme.assistant.client.OpenAiClient;
 import com.acme.assistant.conversation.Conversation;
 import com.acme.assistant.model.ChatRequest;
 import com.acme.assistant.model.ChatResponse;
+import com.acme.assistant.model.ContentPart;
+import com.acme.assistant.util.ImageUtils;
 
+import java.awt.*;
+import java.nio.file.Path;
+import java.util.List;
 import java.util.Scanner;
 import java.util.function.Consumer;
 
@@ -12,6 +17,7 @@ public class ConsoleChatBot {
 
     private static final String MODEL = "gpt-4o-mini";
     private static final String EXIT_COMMAND = "/quit";
+    private static final String IMAGE_COMMAND = "/image";
 
     private final OpenAiClient client;
     private final Conversation conversation;
@@ -31,6 +37,7 @@ public class ConsoleChatBot {
         Scanner scanner = new Scanner(System.in);
 
         System.out.println("AI 비서와 대화를 시작합니다. 종료하려면 '" + EXIT_COMMAND + "'를 입력하세요.");
+        System.out.println("이미지를 분석하려면 /image <파일경로> 를 입력하세요.");
         System.out.println();
 
         while(true) {
@@ -47,7 +54,13 @@ public class ConsoleChatBot {
             }
 
             try {
-                conversation.addUserMessage(input);
+                if (input.equals(IMAGE_COMMAND) || input.startsWith(IMAGE_COMMAND + " ")) {
+                    if (!handleImageCommand(input)) {
+                        continue;
+                    }
+                } else {
+                    conversation.addUserMessage(input);
+                }
 
                 if (streamingEnabled) {
                     handleStreaming();
@@ -60,6 +73,34 @@ public class ConsoleChatBot {
                 System.out.println();
             }
         }
+    }
+
+    private boolean handleImageCommand(String input) throws Exception {
+        String args = input.substring(IMAGE_COMMAND.length()).trim();
+
+        String imagePath;
+        String prompt = "이 이미지에 무엇이 보이나요? 자세히 설명해주세요.";
+
+        int spaceIndex = args.indexOf(' ');
+        if (spaceIndex > 0) {
+            imagePath = args.substring(0, spaceIndex).trim();
+            prompt = args.substring(spaceIndex + 1).trim();
+        } else {
+            imagePath = args;
+        }
+
+        if (imagePath.isEmpty()) {
+            System.out.println("사용법: /image <파일경로> [질문]");
+            return false;
+        }
+
+        String dataUri = ImageUtils.toDataUri(Path.of(imagePath));
+
+        conversation.addUserMessage(List.of(
+                new ContentPart.TextPart(prompt),
+                ContentPart.ImagePart.ofUrl(dataUri)
+        ));
+        return true;
     }
 
     private void handleStreaming() throws Exception {

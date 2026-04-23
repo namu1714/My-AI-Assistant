@@ -3,6 +3,7 @@ package com.acme.assistant;
 import com.acme.assistant.client.OpenAiClient;
 import com.acme.assistant.model.ChatRequest;
 import com.acme.assistant.model.ChatResponse;
+import com.acme.assistant.model.ContentPart;
 import com.acme.assistant.model.Message;
 import com.acme.assistant.prompt.PromptManager;
 import com.acme.assistant.ui.ConsoleChatBot;
@@ -25,8 +26,30 @@ public class Main {
 
         OpenAiClient client = new OpenAiClient(apiKey);
 
-        // runChatBot(client);
-        runTemplatePrompt(client);
+        runChatBot(client);
+        // runTemplatePrompt(client);
+        // demoUrlImage(client);
+    }
+
+    private static void demoUrlImage(OpenAiClient client) throws Exception {
+        String imageUrl = "https://loremflickr.com/600/400";
+
+        ChatRequest request = new ChatRequest(
+                MODEL,
+                List.of(
+                        Message.ofSystem(" 당신은 이미지를 분석하는 AI 비서입니다."),
+                        Message.ofUser(List.of(
+                                new ContentPart.TextPart(
+                                        " 이 이미지에 무엇이 보이나요? 간략하게 설명해주세요."
+                                ),
+                                ContentPart.ImagePart.ofUrl(imageUrl, "low")
+                        ))
+                )
+        );
+
+        ChatResponse response = client.chat(request);
+        System.out.println("[응답] " + response.content());
+        System.out.println("[토큰] " + response.usage());
     }
 
     private static void runTemplatePrompt(OpenAiClient client) throws Exception {

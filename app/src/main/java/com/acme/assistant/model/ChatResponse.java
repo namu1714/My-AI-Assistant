@@ -12,6 +12,7 @@ public record ChatResponse(
         if (choices == null || choices.isEmpty()) {
             return "";
         }
-        return choices.getFirst().message().content();
+        Object content = choices.getFirst().message().content();
+        return content != null ? content.toString() : "";
     }
 }

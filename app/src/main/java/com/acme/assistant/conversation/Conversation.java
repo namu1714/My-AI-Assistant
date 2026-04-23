@@ -1,5 +1,6 @@
 package com.acme.assistant.conversation;
 
+import com.acme.assistant.model.ContentPart;
 import com.acme.assistant.model.Message;
 
 import java.util.ArrayList;
@@ -30,6 +31,11 @@ public class Conversation {
 
     public void addUserMessage(String content) {
         messages.add(Message.ofUser(content));
+        trimIfNeeded();
+    }
+
+    public void addUserMessage(List<ContentPart> parts) {
+        messages.add(Message.ofUser(parts));
         trimIfNeeded();
     }
 

@@ -74,4 +74,23 @@ public class ChatRequestTest {
         assertThat(json).doesNotContain("temperature");
         assertThat(json).doesNotContain("stream");
     }
+
+    @Test
+    void 멀티모달_요청을_직렬화한다() throws Exception {
+        ChatRequest request = new ChatRequest(
+                "gpt-4o-mini",
+                List.of(Message.ofUser(List.of(
+                        new ContentPart.TextPart("이 이미지에 무엇이 보이나요?"),
+                        ContentPart.ImagePart.ofUrl("https://example.com/photo.jpg")
+                )))
+        );
+
+        String json = mapper.writeValueAsString(request);
+
+        assertThat(json).contains("\"model\":\"gpt-4o-mini\"");
+        assertThat(json).contains("\"type\":\"text\"");
+        assertThat(json).contains("\"text\":\"이 이미지에 무엇이 보이나요?\"");
+        assertThat(json).contains("\"type\":\"image_url\"");
+        assertThat(json).contains("\"url\":\"https://example.com/photo.jpg\"");
+    }
 }
