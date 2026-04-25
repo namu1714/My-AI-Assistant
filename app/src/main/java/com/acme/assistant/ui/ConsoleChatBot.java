@@ -105,7 +105,7 @@ public class ConsoleChatBot {
 
     private void handleStreaming() throws Exception {
         ChatRequest request = new ChatRequest(
-                MODEL, conversation.getMessages(), null, null, true, null
+                MODEL, conversation.getMessages(), null, null, true, null, null, null
         );
 
         StringBuilder fullResponse = new StringBuilder();

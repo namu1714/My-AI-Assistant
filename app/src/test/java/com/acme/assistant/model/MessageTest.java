@@ -1,5 +1,7 @@
 package com.acme.assistant.model;
 
+import com.acme.assistant.model.tool.FunctionCall;
+import com.acme.assistant.model.tool.ToolCall;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,7 +12,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.InstanceOfAssertFactories.map;
 
 public class MessageTest {
 
@@ -62,5 +63,32 @@ public class MessageTest {
 
         assertThat(message.role()).isEqualTo("assistant");
         assertThat((String) message.content()).isEqualTo("이미지에 고양이가 보입니다.");
+    }
+
+    @Test
+    void tool_메시지를_직렬화한다() throws Exception {
+        Message message = Message.ofTool("call_abc123", "파일 내용입니다.");
+
+        String json = mapper.writeValueAsString(message);
+
+        assertThat(json).contains("\"role\":\"tool\"");
+        assertThat(json).contains("\"tool_call_id\":\"call_abc123\"");
+        assertThat(json).contains("\"content\":\"파일 내용입니다.\"");
+        assertThat(json).doesNotContain("\"tool_calls\"");
+    }
+
+    @Test
+    void toolCalls를_포함한_assistant_메시지를_직렬화한다() throws Exception {
+        List<ToolCall> toolCalls = List.of(
+                new ToolCall("call_1", "function", new FunctionCall("get_time", "{}"))
+        );
+        Message message = Message.ofAssistant(null, toolCalls);
+
+        String json = mapper.writeValueAsString(message);
+
+        assertThat(json).contains("\"role\":\"assistant\"");
+        assertThat(json).contains("\"tool_calls\"");
+        assertThat(json).contains("\"id\":\"call_1\"");
+        assertThat(json).contains("\"name\":\"get_time\"");
     }
 }

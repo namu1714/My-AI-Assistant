@@ -1,5 +1,6 @@
 package com.acme.assistant.model;
 
+import com.acme.assistant.model.tool.FunctionTool;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -8,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -46,8 +48,7 @@ public class ChatRequestTest {
                 List.of(Message.ofUser("안녕하세요")),
                 0.7,
                 100,
-                null,
-                null
+                null, null, null, null
         );
 
         String json = mapper.writeValueAsString(request);
@@ -64,7 +65,9 @@ public class ChatRequestTest {
                 null,
                 null,
                 null,
-                ResponseFormat.jsonObject()
+                ResponseFormat.jsonObject(),
+                null,
+                null
         );
 
         String json = mapper.writeValueAsString(request);
@@ -92,5 +95,29 @@ public class ChatRequestTest {
         assertThat(json).contains("\"text\":\"이 이미지에 무엇이 보이나요?\"");
         assertThat(json).contains("\"type\":\"image_url\"");
         assertThat(json).contains("\"url\":\"https://example.com/photo.jpg\"");
+    }
+
+    @Test
+    void tools_필드를_직렬화한다() throws Exception {
+        FunctionTool tool = FunctionTool.of(
+                "get_weather",
+                "날씨를 조회한다",
+                Map.of("type", "object",
+                        "properties", Map.of("city", Map.of("type", "string")),
+                        "required", List.of("city"))
+        );
+        ChatRequest request = new ChatRequest(
+                "gpt-4o-mini",
+                List.of(Message.ofUser("오늘 서울의 날씨는?")),
+                null, null, null, null,
+                List.of(tool),
+                null
+        );
+
+        String json = mapper.writeValueAsString(request);
+
+        assertThat(json).contains("\"tools\"");
+        assertThat(json).contains("\"type\":\"function\"");
+        assertThat(json).contains("\"name\":\"get_weather\"");
     }
 }

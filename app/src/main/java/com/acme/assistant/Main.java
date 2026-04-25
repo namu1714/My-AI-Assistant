@@ -5,10 +5,13 @@ import com.acme.assistant.model.ChatRequest;
 import com.acme.assistant.model.ChatResponse;
 import com.acme.assistant.model.ContentPart;
 import com.acme.assistant.model.Message;
+import com.acme.assistant.model.tool.ToolCall;
 import com.acme.assistant.prompt.PromptManager;
+import com.acme.assistant.tool.*;
 import com.acme.assistant.ui.ConsoleChatBot;
 import com.fasterxml.jackson.databind.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -17,6 +20,58 @@ public class Main {
 
     private static final String MODEL = "gpt-4o-mini";
 
+    private final OpenAiClient client;
+    private final ToolRegistry registry;
+
+    public Main(OpenAiClient client, ToolRegistry registry) {
+        this.client = client;
+        this.registry = registry;
+    }
+
+    public String chat(String userMessage) throws Exception {
+        List<Message> messages = new ArrayList<>();
+        messages.add(Message.ofSystem("당신은 도구를 사용할 수 있는 AI 비서입니다."));
+        messages.add(Message.ofUser(userMessage));
+
+        while (true) {
+            ChatRequest request = new ChatRequest(
+                    MODEL, messages, null, null, null, null,
+                    registry.toFunctionTools(), "auto"
+            );
+            ChatResponse response = client.chat(request);
+            var choice = response.choices().getFirst();
+
+            if (choice.message().toolCalls() == null || choice.message().toolCalls().isEmpty()) {
+                return response.content();
+            }
+
+            messages.add(choice.message());
+
+            for (ToolCall toolCall : choice.message().toolCalls()) {
+                ToolUse toolUse = ToolUse.from(toolCall);
+                System.out.println("[도구 호출] " + toolUse.name() + " - " + toolUse.arguments());
+
+                ToolUseResult result = executeTool(toolUse);
+                System.out.println("[도구 결과] " + result.content());
+
+                messages.add(result.toMessage());
+            }
+        }
+    }
+
+    private ToolUseResult executeTool(ToolUse toolUse) {
+        return registry.getTool(toolUse.name())
+                .map(tool -> {
+                    try {
+                        String output = tool.execute(toolUse.arguments());
+                        return ToolUseResult.success(toolUse.id(), output);
+                    } catch (Exception e) {
+                        return ToolUseResult.error(toolUse.id(), "오류: " + e.getMessage());
+                    }
+                })
+                .orElse(ToolUseResult.error(toolUse.id(), "알 수 없는 도구: " + toolUse.name()));
+    }
+
     public static void main(String[] args) throws Exception {
         String apiKey = System.getenv("OPENAI_API_KEY");
         if (apiKey == null || apiKey.isBlank()) {
@@ -24,14 +79,24 @@ public class Main {
             return;
         }
 
-        OpenAiClient client = new OpenAiClient(apiKey);
+        ToolRegistry registry = new ToolRegistry();
+        registry.register(new CurrentTimeTool());
+        registry.register(new FileReadTool());
 
-        runChatBot(client);
-        // runTemplatePrompt(client);
-        // demoUrlImage(client);
+        Main app = new Main(new OpenAiClient(apiKey), registry);
+
+        System.out.println("=== 7 장 도구 호출 데모===\n");
+
+        System.out.println("--- 질문: 지금 몇 시야? ---");
+        String answer1 = app.chat(" 지금 몇 시야?");
+        System.out.println("[최종 응답] " + answer1 + "\n");
+
+        System.out.println("--- 질문: build.gradle 파일 내용을 알려줘 ---");
+        String answer2 = app.chat("build.gradle 파일의 내용을 요약해줘");
+        System.out.println("[최종 응답] " + answer2);
     }
 
-    private static void demoUrlImage(OpenAiClient client) throws Exception {
+    public void demoUrlImage() throws Exception {
         String imageUrl = "https://loremflickr.com/600/400";
 
         ChatRequest request = new ChatRequest(
@@ -52,7 +117,7 @@ public class Main {
         System.out.println("[토큰] " + response.usage());
     }
 
-    private static void runTemplatePrompt(OpenAiClient client) throws Exception {
+    public void runTemplatePrompt(OpenAiClient client) throws Exception {
         PromptManager manager = new PromptManager();
 
         String translatorPrompt = manager.render("translator", Map.of(
@@ -76,14 +141,5 @@ public class Main {
         );
         ChatResponse response = client.chat(request);
         System.out.println("AI: " + response.content());
-    }
-
-    private static void runChatBot(OpenAiClient client) {
-        ConsoleChatBot chatBot = new ConsoleChatBot(
-                client,
-                "당신은 친절한 AI 비서입니다. 간결하게 답변하세요."
-        );
-        chatBot.setStreamingEnabled(true);
-        chatBot.start();
     }
 }

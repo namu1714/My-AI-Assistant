@@ -101,7 +101,9 @@ public class OpenAiClientTest {
         ChatRequest request = new ChatRequest(
                 "gpt-4o-mini",
                 List.of(Message.ofUser("테스트")),
-                null, null, true, null
+                null, null,
+                true,
+                null, null, null
         );
 
         List<String> tokens = new ArrayList<>();
