@@ -26,4 +26,7 @@ public abstract class AbstractTool implements Tool {
     public ToolDefinition definition() {
         return definition;
     }
+
+    @Override
+    public abstract ToolResult execute(ToolInput input, ToolContext context);
 }

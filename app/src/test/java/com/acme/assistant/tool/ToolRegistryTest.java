@@ -50,8 +50,8 @@ public class ToolRegistryTest {
                 new ToolDefinition(name, description, JsonSchemaBuilder.objectSchema().build())
         ) {
             @Override
-            public String execute(String arguments) throws Exception {
-                return "executed";
+            public ToolResult execute(ToolInput input, ToolContext context) {
+                return ToolResult.success("executed");
             }
         };
     }

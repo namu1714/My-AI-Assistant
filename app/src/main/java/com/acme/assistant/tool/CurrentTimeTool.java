@@ -1,4 +1,6 @@
-package com.acme.assistant.tool;
+package com.acme.assistant.tool.implementation;
+
+import com.acme.assistant.tool.*;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -14,8 +16,10 @@ public class CurrentTimeTool extends AbstractTool {
     }
 
     @Override
-    public String execute(String arguments) throws Exception {
-        return LocalDateTime.now()
+    public ToolResult execute(ToolInput input, ToolContext context) {
+        String time = LocalDateTime.now()
                 .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+
+        return ToolResult.success(time);
     }
 }

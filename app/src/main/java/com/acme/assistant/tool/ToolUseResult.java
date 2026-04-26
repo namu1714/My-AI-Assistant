@@ -15,6 +15,12 @@ public record ToolUseResult(
         return new ToolUseResult(toolCallId, content, true);
     }
 
+    public static ToolUseResult from(String toolCallId, ToolResult result) {
+        return new ToolUseResult(
+                toolCallId, result.content(), result.isError()
+        );
+    }
+
     public Message toMessage() {
         return Message.ofTool(toolCallId, content);
     }

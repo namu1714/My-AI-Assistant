@@ -10,5 +10,5 @@ public interface Tool {
 
     Map<String, Object> parameterSchema();
 
-    String execute(String arguments) throws Exception;
+    ToolResult execute(ToolInput input, ToolContext context);
 }
