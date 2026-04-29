@@ -1,4 +1,4 @@
-package com.acme.assistant.tool.implementation.todo;
+package com.acme.assistant.tool.todo;
 
 import com.acme.assistant.tool.*;
 

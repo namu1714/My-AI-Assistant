@@ -1,8 +1,7 @@
-package com.acme.assistant.tool.implementation;
+package com.acme.assistant.tool.bash;
 
 import com.acme.assistant.tool.*;
-import com.acme.assistant.tool.validator.CommandValidator;
-import com.acme.assistant.tool.validator.PathValidator;
+import com.acme.assistant.tool.file.PathValidator;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

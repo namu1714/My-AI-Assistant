@@ -1,7 +1,6 @@
-package com.acme.assistant.tool.implementation;
+package com.acme.assistant.tool.file;
 
 import com.acme.assistant.tool.*;
-import com.acme.assistant.tool.validator.PathValidator;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -53,6 +52,12 @@ public class FileEditTool extends AbstractTool {
 
             String updated = content.replace(oldText, newText);
             Files.writeString(resolved, updated);
+
+            context.getMetadata("fileTracker")
+                    .filter(obj -> obj instanceof FileTracker)
+                    .map(obj -> (FileTracker) obj)
+                    .ifPresent(tracker ->
+                            tracker.record(pathStr, FileOperation.EDIT));
 
             return ToolResult.success("파일 수정 완료: " + pathStr);
         } catch (SecurityException e) {

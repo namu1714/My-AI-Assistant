@@ -1,8 +1,5 @@
-package com.acme.assistant.tool.implementation;
+package com.acme.assistant.tool;
 
-import com.acme.assistant.tool.ToolContext;
-import com.acme.assistant.tool.ToolInput;
-import com.acme.assistant.tool.ToolResult;
 import com.acme.assistant.tool.web.MockSearchProvider;
 import com.acme.assistant.tool.web.WebSearchTool;
 import com.acme.assistant.tool.web.UrlValidator;

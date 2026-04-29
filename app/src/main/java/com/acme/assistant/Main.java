@@ -6,10 +6,6 @@ import com.acme.assistant.model.ChatResponse;
 import com.acme.assistant.model.Message;
 import com.acme.assistant.model.tool.ToolCall;
 import com.acme.assistant.tool.*;
-import com.acme.assistant.tool.implementation.CurrentTimeTool;
-import com.acme.assistant.tool.implementation.FileReadTool;
-import com.acme.assistant.tool.implementation.FileWriteTool;
-import com.acme.assistant.tool.validator.AllowedToolValidator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +35,7 @@ public class Main {
             System.err.println("OPENAI_API_KEY 환경 변수를 설정해야 합니다.");
             return;
         }
-
+        /*
         ToolRegistry registry = new ToolRegistry();
         registry.register(new CurrentTimeTool());
         registry.register(new FileReadTool());
@@ -64,6 +60,8 @@ public class Main {
         System.out.println("--- 질문: /tmp/test.txt 에 hello를 써줘 ---");
         String answer3 = app.chat("/tmp/test.txt 에 hello를 써줘");
         System.out.println("[최종 응답] " + answer3);
+
+         */
     }
 
     public String chat(String userMessage) throws Exception {

@@ -56,6 +56,17 @@ public class ToolInput {
         return Optional.of(node.asText());
     }
 
+    public int optionalInt(String name, int defaultValue) {
+        var node = root.get(name);
+        if (node == null || node.isNull()) {
+            return defaultValue;
+        }
+        if (!node.isNumber()) {
+            throw new IllegalArgumentException("파라미터 타입 오류: " + name + " (정수 필요)");
+        }
+        return node.asInt();
+    }
+
     public boolean optionalBoolean(String name, boolean defaultValue) {
         var node = root.get(name);
         if (node == null || node.isNull()) {

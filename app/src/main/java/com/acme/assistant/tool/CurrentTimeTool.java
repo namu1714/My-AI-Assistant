@@ -1,6 +1,4 @@
-package com.acme.assistant.tool.implementation;
-
-import com.acme.assistant.tool.*;
+package com.acme.assistant.tool;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;

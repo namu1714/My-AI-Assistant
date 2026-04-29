@@ -1,7 +1,6 @@
-package com.acme.assistant.tool.implementation;
+package com.acme.assistant.tool.file;
 
 import com.acme.assistant.tool.*;
-import com.acme.assistant.tool.validator.PathValidator;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -105,6 +104,12 @@ public class GrepTool extends AbstractTool {
 
             String summary = results.size() > MAX_RESULTS
                     ? "\n... (결과가 " + MAX_RESULTS + "개로 제한됨)" : "";
+
+            context.getMetadata("fileTracker")
+                    .filter(obj -> obj instanceof FileTracker)
+                    .map(obj -> (FileTracker) obj)
+                    .ifPresent(tracker ->
+                            tracker.record(pathStr, FileOperation.GREP));
 
             return ToolResult.success(String.join("\n", results) + summary);
 

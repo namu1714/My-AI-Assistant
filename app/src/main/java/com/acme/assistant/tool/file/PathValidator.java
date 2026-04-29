@@ -1,4 +1,4 @@
-package com.acme.assistant.tool.validator;
+package com.acme.assistant.tool.file;
 
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;

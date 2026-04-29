@@ -1,7 +1,6 @@
-package com.acme.assistant.tool.implementation.web;
+package com.acme.assistant.tool.web;
 
 import com.acme.assistant.tool.*;
-import com.acme.assistant.tool.validator.UrlValidator;
 
 import java.net.URI;
 import java.net.http.HttpClient;

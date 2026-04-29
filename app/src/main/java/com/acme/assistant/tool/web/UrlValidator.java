@@ -1,4 +1,4 @@
-package com.acme.assistant.tool.validator;
+package com.acme.assistant.tool.web;
 
 import java.net.InetAddress;
 import java.net.URI;

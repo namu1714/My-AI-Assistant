@@ -1,4 +1,4 @@
-package com.acme.assistant.tool.validator;
+package com.acme.assistant.tool.bash;
 
 import java.util.List;
 import java.util.regex.Pattern;

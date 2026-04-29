@@ -1,7 +1,6 @@
-package com.acme.assistant.tool.implementation;
+package com.acme.assistant.tool.file;
 
 import com.acme.assistant.tool.*;
-import com.acme.assistant.tool.validator.PathValidator;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -46,6 +45,14 @@ public class FileReadTool extends AbstractTool {
             }
 
             String content = String.join("\n", stream.toList());
+
+            // 파일 추적기가 있으면 읽기 작업을 기록한다
+            context.getMetadata("fileTracker")
+                    .filter(obj -> obj instanceof FileTracker)
+                    .map(obj -> (FileTracker) obj)
+                    .ifPresent(tracker ->
+                            tracker.record(pathStr, FileOperation.READ));
+
             return ToolResult.success(content);
         } catch (SecurityException e) {
             return ToolResult.error("경로 접근 거부: " + e.getMessage());

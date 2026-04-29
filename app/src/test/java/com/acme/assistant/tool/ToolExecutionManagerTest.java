@@ -1,10 +1,12 @@
 package com.acme.assistant.tool;
 
-import com.acme.assistant.tool.implementation.CurrentTimeTool;
-import com.acme.assistant.tool.implementation.FileReadTool;
+import com.acme.assistant.tool.file.FileReadTool;
 import com.acme.assistant.tool.validator.AllowedToolValidator;
+import com.acme.assistant.tool.file.PathValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -12,11 +14,12 @@ public class ToolExecutionManagerTest {
 
     private final ToolRegistry registry = new ToolRegistry();
     private final ToolExecutionManager manager = new ToolExecutionManager(registry);
+    private final PathValidator validator = new PathValidator(Path.of("temp/"));
 
     @BeforeEach
     void setUp() {
         registry.register(new CurrentTimeTool());
-        registry.register(new FileReadTool());
+        registry.register(new FileReadTool(validator));
     }
 
     @Test

@@ -1,7 +1,6 @@
-package com.acme.assistant.tool.implementation;
+package com.acme.assistant.tool.file;
 
 import com.acme.assistant.tool.*;
-import com.acme.assistant.tool.validator.PathValidator;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,6 +36,13 @@ public class FileWriteTool extends AbstractTool {
                 Files.createDirectories(parent);
             }
             Files.writeString(resolved, content);
+
+            context.getMetadata("fileTracker")
+                    .filter(obj -> obj instanceof FileTracker)
+                    .map(obj -> (FileTracker) obj)
+                    .ifPresent(tracker ->
+                            tracker.record(pathStr, FileOperation.WRITE));
+
             return ToolResult.success("파일 작성 완료: " + pathStr);
         } catch (SecurityException e) {
             return ToolResult.error("경로 접근 거부: " + e.getMessage());

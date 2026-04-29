@@ -1,4 +1,4 @@
-package com.acme.assistant.tool.implementation.web;
+package com.acme.assistant.tool.web;
 
 import java.util.List;
 

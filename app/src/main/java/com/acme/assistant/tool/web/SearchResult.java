@@ -1,4 +1,4 @@
-package com.acme.assistant.tool.implementation.web;
+package com.acme.assistant.tool.web;
 
 public record SearchResult(
         String title, String url, String snippet
