@@ -1,5 +1,6 @@
 package com.acme.assistant.tool;
 
+import com.acme.assistant.llm.LlmToolCall;
 import com.acme.assistant.model.tool.ToolCall;
 
 public record ToolUse(
@@ -12,6 +13,14 @@ public record ToolUse(
                 toolCall.id(),
                 toolCall.function().name(),
                 toolCall.function().arguments()
+        );
+    }
+
+    public static ToolUse from(LlmToolCall llmToolCall) {
+        return new ToolUse(
+                llmToolCall.id(),
+                llmToolCall.name(),
+                llmToolCall.arguments()
         );
     }
 }
