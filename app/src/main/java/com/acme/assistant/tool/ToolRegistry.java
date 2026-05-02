@@ -29,4 +29,14 @@ public class ToolRegistry {
                 ))
                 .toList();
     }
+
+    public List<ToolDefinition> toToolDefinitions() {
+        return tools.values().stream()
+                .map(tool -> new ToolDefinition(
+                        tool.name(),
+                        tool.description(),
+                        tool.parameterSchema()
+                ))
+                .toList();
+    }
 }

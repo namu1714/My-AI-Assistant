@@ -1,10 +1,7 @@
 package com.acme.assistant;
 
 import com.acme.assistant.client.OpenAiClient;
-import com.acme.assistant.model.ChatRequest;
-import com.acme.assistant.model.ChatResponse;
-import com.acme.assistant.model.Message;
-import com.acme.assistant.model.tool.ToolCall;
+import com.acme.assistant.llm.*;
 import com.acme.assistant.tool.*;
 import com.acme.assistant.tool.bash.BashTool;
 import com.acme.assistant.tool.bash.CommandValidator;
@@ -22,8 +19,6 @@ import java.util.List;
 
 public class Main {
 
-    private static final String MODEL = "gpt-4o-mini";
-
     private static final String SYSTEM_PROMPT = """
             당신은 프로젝트 분석 전문가 AI 비서입니다.
             사용 가능한 도구를 활용하여 프로젝트 구조를 분석하고,
@@ -35,18 +30,24 @@ public class Main {
             4. file_tracker 로 작업 이력을 확인한다
            """;
 
-    private final OpenAiClient client;
+    private final LlmClient client;
+    private final LlmModel model;
     private final ToolRegistry registry;
     private final ToolExecutionManager executionManager;
+    private final TokenTracker tokenTracker;
 
     public Main(
-            OpenAiClient client,
+            LlmClient client,
+            LlmModel model,
             ToolRegistry registry,
-            ToolExecutionManager executionManager
+            ToolExecutionManager executionManager,
+            TokenTracker tokenTracker
     ) {
         this.client = client;
+        this.model = model;
         this.registry = registry;
         this.executionManager = executionManager;
+        this.tokenTracker = tokenTracker;
     }
 
     public static void main(String[] args) throws Exception {
@@ -84,39 +85,40 @@ public class Main {
 
         ToolExecutionManager executionManager = new ToolExecutionManager(registry, validator);
 
+        LlmClient llmClient = new OpenAiLlmClient(
+                new OpenAiClient(apiKey));
+        LlmModel model = new LlmModel("gpt-4o-mini");
+        TokenTracker tokenTracker = new TokenTracker();
+
         Main app = new Main(
-                new OpenAiClient(apiKey), registry, executionManager
+                llmClient, model, registry, executionManager, tokenTracker
         );
 
-        System.out.println("=== 9장 프로젝트 분석 AI 비서 ===\n");
-
-        List<Message> messages = new ArrayList<>();
-        messages.add(Message.ofSystem(SYSTEM_PROMPT));
-        messages.add(Message.ofUser(
-                "이 프로젝트의 구조를 분석하고 주요 파일을 알려줘"));
+        List<ChatMessage> messages = new ArrayList<>();
+        messages.add(ChatMessage.ofSystem(SYSTEM_PROMPT));
+        messages.add(ChatMessage.ofUser("프로젝트 구조를 분석해줘"));
 
         String answer = app.chat(messages);
+
         System.out.println("\n[최종 응답] " + answer);
+        System.out.println("\n[토큰 사용량] " + tokenTracker.summary());
     }
 
-    public String chat(List<Message> messages) throws Exception {
+    public String chat(List<ChatMessage> messages) throws Exception {
         ToolContext context = ToolContext.of("main", "user");
+        List<ToolDefinition> tools = registry.toToolDefinitions();
 
         while (true) {
-            ChatRequest request = new ChatRequest(
-                    MODEL, messages, null, null, null, null,
-                    registry.toFunctionTools(), "auto"
-            );
-            ChatResponse response = client.chat(request);
-            var choice = response.choices().getFirst();
+            LlmResponse response = client.chat(model, messages, tools);
+            tokenTracker.add(response.tokenUsage());
 
-            if (choice.message().toolCalls() == null || choice.message().toolCalls().isEmpty()) {
+            if (!response.hasToolCalls()) {
                 return response.content();
             }
 
-            messages.add(choice.message());
+            messages.add(response.toAssistantMessage());
 
-            for (ToolCall toolCall : choice.message().toolCalls()) {
+            for (LlmToolCall toolCall : response.toolCalls()) {
                 ToolUse toolUse = ToolUse.from(toolCall);
                 System.out.println("[도구 호출] " + toolUse.name() + " - " + toolUse.arguments());
 
@@ -128,7 +130,9 @@ public class Main {
                     System.out.println("[결과] " + truncate(result.content(), 200));
                 }
 
-                messages.add(result.toMessage());
+                messages.add(
+                        ChatMessage.ofTool(toolCall.id(), result.content())
+                );
             }
         }
     }
