@@ -1,7 +1,8 @@
-package com.acme.assistant.llm;
+package com.acme.assistant.llm.client;
 
 import com.acme.assistant.client.OpenAiClient;
 import com.acme.assistant.exception.LlmException;
+import com.acme.assistant.llm.*;
 import com.acme.assistant.model.ChatRequest;
 import com.acme.assistant.model.ChatResponse;
 import com.acme.assistant.model.Message;

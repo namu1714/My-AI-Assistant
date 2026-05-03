@@ -1,6 +1,7 @@
-package com.acme.assistant.llm;
+package com.acme.assistant.llm.client;
 
 import com.acme.assistant.exception.LlmException;
+import com.acme.assistant.llm.*;
 import com.acme.assistant.tool.ToolDefinition;
 
 import java.util.ArrayDeque;

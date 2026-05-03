@@ -1,5 +1,8 @@
-package com.acme.assistant.llm;
+package com.acme.assistant.llm.client;
 
+import com.acme.assistant.llm.ChatMessage;
+import com.acme.assistant.llm.LlmModel;
+import com.acme.assistant.llm.LlmResponse;
 import com.acme.assistant.tool.ToolDefinition;
 
 import java.util.List;

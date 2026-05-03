@@ -1,6 +1,7 @@
 package com.acme.assistant.llm;
 
 import com.acme.assistant.exception.LlmException;
+import com.acme.assistant.llm.client.MockLlmClient;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

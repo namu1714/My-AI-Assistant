@@ -22,21 +22,31 @@ import java.util.function.Consumer;
 
 public class OpenAiClient {
 
-    private static final String BASE_URL = "https://api.openai.com";
+    private static final String DEFAULT_BASE_URL = "https://api.openai.com";
     private static final int MAX_RETRIES = 3;
     private static final int BASE_DELAY_MS = 1000;
 
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
     private final String apiKey;
+    private final String baseUrl;
 
     public OpenAiClient(String apiKey) {
-        this(apiKey, HttpClient.newHttpClient());
+        this(apiKey, HttpClient.newHttpClient(), DEFAULT_BASE_URL);
+    }
+
+    public OpenAiClient(String apiKey, String baseUrl) {
+        this(apiKey, HttpClient.newHttpClient(), baseUrl);
     }
 
     public OpenAiClient(String apiKey, HttpClient httpClient) {
+        this(apiKey, httpClient, DEFAULT_BASE_URL);
+    }
+
+    public OpenAiClient(String apiKey, HttpClient httpClient, String baseUrl) {
         this.apiKey = apiKey;
         this.httpClient = httpClient;
+        this.baseUrl = baseUrl;
         this.objectMapper = new ObjectMapper()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
                 .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
@@ -49,7 +59,7 @@ public class OpenAiClient {
         String json = objectMapper.writeValueAsString(chatRequest);
 
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(BASE_URL + "/v1/chat/completions"))
+                .uri(URI.create(baseUrl + "/v1/chat/completions"))
                 .header("Content-Type", "application/json")
                 .header("Authorization", "Bearer " + apiKey)
                 .POST(HttpRequest.BodyPublishers.ofString(json))
@@ -64,7 +74,7 @@ public class OpenAiClient {
         String json = objectMapper.writeValueAsString(chatRequest);
 
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(BASE_URL + "/v1/chat/completions"))
+                .uri(URI.create(baseUrl + "/v1/chat/completions"))
                 .header("Content-Type", "application/json")
                 .header("Authorization", "Bearer " + apiKey)
                 .POST(HttpRequest.BodyPublishers.ofString(json))

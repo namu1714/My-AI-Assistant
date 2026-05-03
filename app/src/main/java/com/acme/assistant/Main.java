@@ -2,6 +2,8 @@ package com.acme.assistant;
 
 import com.acme.assistant.client.OpenAiClient;
 import com.acme.assistant.llm.*;
+import com.acme.assistant.llm.client.LlmClient;
+import com.acme.assistant.llm.client.OpenAiLlmClient;
 import com.acme.assistant.tool.*;
 import com.acme.assistant.tool.bash.BashTool;
 import com.acme.assistant.tool.bash.CommandValidator;
