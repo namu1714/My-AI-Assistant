@@ -3,6 +3,7 @@ package com.acme.assistant;
 import com.acme.assistant.client.OpenAiClient;
 import com.acme.assistant.llm.*;
 import com.acme.assistant.llm.client.LlmClient;
+import com.acme.assistant.llm.client.LlmClientFactory;
 import com.acme.assistant.llm.client.OpenAiLlmClient;
 import com.acme.assistant.tool.*;
 import com.acme.assistant.tool.bash.BashTool;
@@ -53,11 +54,20 @@ public class Main {
     }
 
     public static void main(String[] args) throws Exception {
-        String apiKey = System.getenv("OPENAI_API_KEY");
-        if (apiKey == null || apiKey.isBlank()) {
-            System.err.println("OPENAI_API_KEY 환경 변수를 설정해야 합니다.");
-            return;
+        String providerName = System.getenv("LLM_PROVIDER");
+        if (providerName == null) {
+            providerName = "openai";
         }
+        LlmProvider provider = LlmProvider.from(providerName);
+
+        // LlmClient 생성
+        LlmClient llmClient = LlmClientFactory.fromEnvironment();
+        LlmModel model = new LlmModel(
+                LlmClientFactory.defaultModel(provider));
+        TokenTracker tokenTracker = new TokenTracker();
+
+        System.out.println("=== 11 장 프로젝트 분석 AI 비서 ===");
+        System.out.println("[LLM 제공자] " + provider.value() + "\n");
 
         // 기본 디렉토리 설정
         Path baseDir = Path.of(".")
@@ -86,12 +96,6 @@ public class Main {
         );
 
         ToolExecutionManager executionManager = new ToolExecutionManager(registry, validator);
-
-        LlmClient llmClient = new OpenAiLlmClient(
-                new OpenAiClient(apiKey));
-        LlmModel model = new LlmModel("gpt-4o-mini");
-        TokenTracker tokenTracker = new TokenTracker();
-
         Main app = new Main(
                 llmClient, model, registry, executionManager, tokenTracker
         );
