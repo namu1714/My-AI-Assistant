@@ -5,6 +5,8 @@ import com.acme.assistant.model.ChatRequest;
 import com.acme.assistant.model.ChatResponse;
 import com.acme.assistant.model.ChatStreamResponse;
 import com.acme.assistant.model.ErrorResponse;
+import com.acme.assistant.model.embedding.EmbeddingApiResponse;
+import com.acme.assistant.model.embedding.EmbeddingRequest;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -133,6 +135,56 @@ public class OpenAiClient {
 
             lastException = exception;
         }
+        throw lastException;
+    }
+
+    public EmbeddingApiResponse embeddings(EmbeddingRequest embeddingRequest)
+        throws IOException, InterruptedException {
+
+        String json = objectMapper.writeValueAsString(embeddingRequest);
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl + "/v1/embeddings"))
+                .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer " + apiKey)
+                .POST(HttpRequest.BodyPublishers.ofString(json))
+                .build();
+
+        return sendEmbeddingsWithRetry(request);
+    }
+
+    private EmbeddingApiResponse sendEmbeddingsWithRetry(HttpRequest request)
+        throws IOException, InterruptedException {
+
+        OpenAiException lastException = null;
+
+        for (int attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+            if (attempt > 0) {
+                long delay = calculateDelay(attempt);
+                Thread.sleep(delay);
+            }
+
+            HttpResponse<String> response = httpClient.send(
+                    request, HttpResponse.BodyHandlers.ofString()
+            );
+
+            if(response.statusCode() == 200) {
+                return objectMapper.readValue(
+                        response.body(), EmbeddingApiResponse.class
+                );
+            }
+
+            OpenAiException exception = createException(
+                    response.statusCode(), response.body()
+            );
+
+            if (!exception.isRetryable()) {
+                throw exception;
+            }
+
+            lastException = exception;
+        }
+
         throw lastException;
     }
 
