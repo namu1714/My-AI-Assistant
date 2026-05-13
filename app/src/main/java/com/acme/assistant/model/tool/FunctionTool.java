@@ -3,7 +3,7 @@ package com.acme.assistant.model.tool;
 import java.util.Map;
 
 /**
- * API function tool definition that can be serialized to JSON and sent to the assistant.
+ * API function tool description that can be serialized to JSON and sent to the assistant.
  */
 public record FunctionTool(
         String type,
