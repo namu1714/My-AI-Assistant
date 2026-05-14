@@ -1,12 +1,10 @@
 package com.acme.assistant;
 
+import com.acme.assistant.agent.*;
 import com.acme.assistant.llm.*;
 import com.acme.assistant.llm.client.LlmClient;
 import com.acme.assistant.llm.client.LlmClientFactory;
-import com.acme.assistant.memory.ConversationMemory;
-import com.acme.assistant.memory.FileConversationRepository;
-import com.acme.assistant.memory.PersistentMemory;
-import com.acme.assistant.memory.TokenWindowMemory;
+import com.acme.assistant.memory.*;
 import com.acme.assistant.rag.*;
 import com.acme.assistant.tool.*;
 import com.acme.assistant.tool.file.*;
@@ -28,25 +26,40 @@ public class Main {
         LlmClient llmClient = LlmClientFactory.fromEnvironment();
         LlmModel llmModel = new LlmModel(
                 LlmClientFactory.defaultModel(provider));
-        TokenTracker tokenTracker = new TokenTracker();
 
-        System.out.println("=== 13장 대화 메모리 AI 비서 ===");
+        System.out.println("=== 15장 로컬 정보 검색 Agent ===");
         System.out.println("[LLM 제공자] " + provider.value());
 
-        // 메모리 구성: 토큰 윈도우 + 파일 영속화
-        ConversationMemory memory = new PersistentMemory(
-                new TokenWindowMemory(4000),
-                new FileConversationRepository(Path.of("conversations")),
-                "default"
-        );
+        // 도구 등록
+        var toolRegistry = new ToolRegistry();
+        var pathValidator = new PathValidator(
+                Path.of(".").toAbsolutePath().normalize());
 
-        // 시스템 메시지 설정
-        memory.setSystemMessage(ChatMessage.ofSystem(
-                "당신은 친절한 AI 비서입니다. " +
-                "이전 대화 맥락을 기억하며 답변합니다. "));
+        toolRegistry.register(new CurrentTimeTool());
+        toolRegistry.register(new FileReadTool(pathValidator));
+        toolRegistry.register(new GrepTool(pathValidator));
 
-        System.out.println("[메모리] TokenWindowMemory(4000)" + " + FileConversationRepository");
-        System.out.println("[저장된 메시지] " + memory.messageCount() + " 개\n");
+        // Agent 생성
+        var agent = DefaultAgent.builder()
+                .name("local-search-agent")
+                .description("로컬 파일을 검색하고 분석하는 에이전트")
+                .llmClient(llmClient)
+                .llmModel(llmModel)
+                .toolRegistry(toolRegistry)
+                .memory(new MessageWindowMemory(50))
+                .systemPrompt(
+                        "당신은 로컬 파일 시스템을 탐색하여"
+                        + " 사용자의 질문에 답하는 AI 비서입니다. "
+                        + " 파일을 읽거나 검색하여 정확한 정보를"
+                        + " 제공합니다.")
+                .build();
+
+        // ReActAgentExecutor 생성
+        var executor = new ReActAgentExecutor();
+        var context = new ExecutionContext("main-session");
+
+        System.out.println("[도구] current_time, file_read, grep");
+        System.out.println("[메모리] MessageWindowMemory(50)\n");
 
         // 대화 루프
         Scanner scanner = new Scanner(System.in);
@@ -58,27 +71,23 @@ public class Main {
                 break;
             }
 
-            if (input.equalsIgnoreCase("clear")) {
-                memory.clear();
-                System.out.println("[메모리 초기화 완료]\n");
-                continue;
-            }
-
             if (input.isEmpty()) {
                 continue;
             }
 
-            // 사용자 메시지 추가
-            memory.addMessage(ChatMessage.ofUser(input));
-
-            // LLM 호출
-            LlmResponse response = llmClient.chat(llmModel, memory.getMessages());
-
-            // 응답 메시지 추가
-            memory.addMessage(response.toAssistantMessage());
+            // Agent 실행
+            AgentResponse response = executor.execute(agent, new AgentRequest(input), context);
 
             System.out.println("\n[비서] " + response.content());
-            System.out.println("[메시지 수] " + memory.messageCount() + " 개");
+
+            // 실행 메타데이터 출력
+            ExecutionMetadata metadata = executor.getLastExecutionMetadata();
+            if (metadata != null) {
+                System.out.println("[반복] " + metadata.iterationCount() + " 회, ");
+                System.out.println("[도구 호출] " + metadata.toolCallCount() + " 회, ");
+                System.out.println("[토큰] " + metadata.totalTokenUsage().totalTokens() + " 개");
+            }
+            System.out.println();
         }
 
         System.out.println("종료합니다.");
